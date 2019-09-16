@@ -1,1 +1,1 @@
-web: gunicorn CMS:app
+web: gunicorn cms:app
