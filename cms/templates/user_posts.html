@@ -1,0 +1,68 @@
+{% if curr_user['role'] != 'author' %}
+{% extends "layout2.html"%}
+{%else%}
+{% extends "layout.html"%}
+{%endif%}
+{%block content%}
+<h1 class="mb-3">Post by {{username}}                         ({{postnumber}})</h1>
+    {% for post in posts%}
+    <article class="media content-section">
+      
+        <img class="rounded-circle article-img" src="{{ url_for('static', filename='profilepics/' + post['userimage'] ) }}">
+            <div class="media-body">
+              <div class="article-metadata row " style="padding-bottom:20px">
+                <div class="col-md-8">
+                    <a class="mr-2" >{{ post['author'] }}</a>
+                    <small class="text-muted">{{ post['date_posted'].strftime('%Y-%m-%d') }}</small>
+                </div>
+                {% if post['author'] == curr_user['username'] %}
+                <div class="col-md-4" style="-moz-float-edge: ">
+                    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('update_post', _id=post['_id']) }}">Update</a>
+                    <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
+                </div>
+                {%elif curr_user['role'] == 'subscriber' or 'author' %}
+                <div class="col-md-4" >
+                    {% if fav.find_one({'$and':[{'post_id':post['_id']},{"user_id":curr_user['_id']}]}) %}
+                    <a href="{{ url_for('not_favourite_post', _id=post['_id'],path='home') }}" class="btn btn-danger" role="button">Remove favourite</a>
+                    {% else %}
+                    <a href="{{ url_for('is_favourite_post', _id=post['_id'],path='home') }}" class="btn btn-info" role="button">Add to favourite</a>
+                    {% endif %}
+                </div>
+                    {% endif %}
+                </div>
+                {%elif curr_user[role] == 'admin' %}
+                <div class="col-md-4" >
+                    <div class="float-right">
+                    <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
+                  </div>
+</div>
+              {% endif %}
+              </div>
+              <h2><a class="article-title" href="{{url_for('post', _id=post['_id'])}}">{{ post['title'] }}</a></h2>
+              <p class="article-content">{{ post['content'] }}</p>
+            </div>
+          </article>
+          <!-- Modal -->
+          <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Delete Post?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <form action="{{ url_for('delete_post', _id=post['_id']) }}" method="POST">
+                      <input class="btn btn-danger" type="submit" value="Delete" style="margin-top: 15px">
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+           
+    {% endfor %}
+{% endblock content %}        
+   
+   
