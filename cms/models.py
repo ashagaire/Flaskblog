@@ -1,10 +1,10 @@
-from cms import login_manager,db
+from cms import login_manager,mongo
 from flask_login import UserMixin
 
 
 @login_manager.user_loader
 def load_user(username):
-    u = db.users.find_one({'username': username})
+    u = mongo.db.users.find_one({'username': username})
     if not u:
         return None
     return User(u['_id'])

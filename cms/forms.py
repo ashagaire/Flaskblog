@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import SelectField,DateTimeField,StringField,PasswordField,SubmitField,BooleanField,TextAreaField
 from wtforms.validators import ValidationError, DataRequired, Length, Email, EqualTo
-from cms import  db
+from cms import  mongo
 from flask_login import current_user
 
 class RegistrationForm(FlaskForm):
@@ -18,12 +18,12 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField('Sign Up')
 
     def validate_username(self, username):
-        user = db.users.find_one({'username': username.data})
+        user = mongo.db.users.find_one({'username': username.data})
         if user:
             raise ValidationError('Username is taken.Please choose a diffrent one.')
         
     def validate_email(self, email):
-        user=db.users.find_one({'email':email.data})
+        user=mongo.db.users.find_one({'email':email.data})
         if user:
             raise ValidationError('Email is taken.Please choose a diffrent one.')
 
@@ -52,17 +52,17 @@ class UpdateForm(FlaskForm):
     
     def validate_username(self, username):
         identity= current_user._id
-        user = db.users.find_one({'_id': identity})
+        user = mongo.db.users.find_one({'_id': identity})
         if username.data != user['username']:
-            user = db.users.find_one({'username': username.data})
+            user = mongo.db.users.find_one({'username': username.data})
             if user:
                 raise ValidationError('Username is taken.Please choose a diffrent one.')
         
     def validate_email(self, email):
         identity= current_user._id
-        user = db.users.find_one({'_id': identity})
+        user = mongo.db.users.find_one({'_id': identity})
         if email.data != user['email']:
-            user=db.users.find_one({'email':email.data})
+            user=mongo.db.users.find_one({'email':email.data})
             if user:
                 raise ValidationError('Email is taken.Please choose a diffrent one.')
 

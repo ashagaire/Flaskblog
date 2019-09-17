@@ -1,13 +1,13 @@
 from flask import abort,redirect,render_template , url_for,flash, request,jsonify
 from PIL import Image
 from cms.forms import UpdateForm,RegistrationForm,LoginForm,PostForm,FeedbackForm
-from cms import app,db,bcrypt, login_manager
+from cms import app,mongo,bcrypt, login_manager
 from flask_login import login_user,current_user,logout_user,login_required
 from cms.models import User
 import datetime,secrets
 import pymongo,os
 from bson import ObjectId
-records =db.users
+records =mongo.db.users
 
 def save_picture(from_picture):
     random_hex=secrets.token_hex(8)
@@ -25,32 +25,32 @@ def save_picture(from_picture):
 @app.route("/home")
 @login_required
 def home():
-    fav=db.favourite
+    fav=mongo.db.favourite
     curr_user = records.find_one({'_id': current_user._id})
-    posts=  db.post.find().sort([("_id", -1)])
+    posts=  mongo.db.post.find().sort([("_id", -1)])
     return render_template('home.html', posts=posts,curr_user=curr_user,fav=fav)
 
 @app.route("/myposts")
 @login_required
 def myposts():
-    fav=db.favourite
+    fav=mongo.db.favourite
     curr_user = records.find_one({'_id': current_user._id})
-    posts=  db.post.find({'user_id': current_user._id}).sort([("_id", -1)])
+    posts=  mongo.db.post.find({'user_id': current_user._id}).sort([("_id", -1)])
     return render_template('myposts.html', posts=posts,curr_user=curr_user,fav=fav)
 
 @app.route("/fav_posts_list")
 @login_required
 def fav_posts_list():
     curr_user = records.find_one({'_id': current_user._id})
-    fav=db.favourite
-    database=db.post
-    fav_list = db.favourite.find({'user_id': current_user._id}).sort([("_id", -1)])
+    fav=mongo.db.favourite
+    database=mongo.db.post
+    fav_list = mongo.db.favourite.find({'user_id': current_user._id}).sort([("_id", -1)])
     postnumber = fav_list.count()
     if fav_list:
         output=[]
         for post in fav_list:
             post_id= post['post_id']
-            post = db.post.find_one({'_id': post['post_id']})
+            post = mongo.db.post.find_one({'_id': post['post_id']})
             output.append(post)
     else:
         flash(f'Your dont have favourite posts.','success')
@@ -66,7 +66,7 @@ def about():
         username=user['username']
         form.user.data=username
     if form.validate_on_submit():
-        db.feedback.insert({ "feedback":form.feedback.data})
+        mongo.db.feedback.insert({ "feedback":form.feedback.data})
         flash(f'Your feedback has been sent!','success')
         return redirect(url_for('about'))
     return render_template('about.html',legend='Feedback form',title='Feedback',form=form)
@@ -111,7 +111,7 @@ def new_post():
     form = PostForm()
     if (user['role'] == 'author'):
         if form.validate_on_submit():
-            db.post.insert({ "author":user, "title":form.title.data,"date_posted":datetime.datetime.now(),"content":form.content.data})
+            mongo.db.post.insert({ "author":user, "title":form.title.data,"date_posted":datetime.datetime.now(),"content":form.content.data})
             flash(f'Your post has been created!','success')
             return redirect(url_for('home'))
     else:
@@ -124,20 +124,20 @@ def new_post():
 
 @app.route("/post/<_id>")
 def post(_id):
-    fav=db.favourite
-    post=db.post.find_one({'_id':ObjectId(_id)})
+    fav=mongo.db.favourite
+    post=mongo.db.post.find_one({'_id':ObjectId(_id)})
     curr_user = records.find_one({'_id': current_user._id})
     return render_template('post.html', title=post['title'],post=post,curr_user=curr_user,fav=fav)
 
 @app.route("/post/<_id>/update",methods=['GET','POST'])
 def update_post(_id):
     form = PostForm()
-    post=db.post.find_one({'_id':ObjectId(_id)})
+    post=mongo.db.post.find_one({'_id':ObjectId(_id)})
     user = records.find_one({'_id': current_user._id})
     if post['author'] != user['username']:
         abort(403)
     if form.validate_on_submit():
-        db.post.update_one({'_id': ObjectId(_id)}, {'$set': {"title":form.title.data, "content":form.content.data}})
+        mongo.db.post.update_one({'_id': ObjectId(_id)}, {'$set': {"title":form.title.data, "content":form.content.data}})
         flash('Your post has been updated!','success')
         return redirect(url_for('post',_id=post['_id']))
     elif request.method== 'GET':
@@ -148,15 +148,15 @@ def update_post(_id):
 @app.route("/post/<_id>/delete",methods=['POST'])
 @login_required
 def delete_post(_id):
-    post=db.post.find_one({"_id":ObjectId(_id)})
+    post=mongo.db.post.find_one({"_id":ObjectId(_id)})
     user = records.find_one({"_id": current_user._id})
     if (post['author'] == user['username']) or (user['role'] =='admin'):
         # fav_listed= db.favourite.find({"post_id":ObjectId(_id)})
         # if fav_listed:
         #     for data in fav_listed:
         #         db.favourite.delete_one({"_id": data['_id']})
-        db.favourite.delete_many({"post_id": ObjectId(_id)})      
-        db.post.delete_one({"_id": ObjectId(_id)})
+        mongo.db.favourite.delete_many({"post_id": ObjectId(_id)})      
+        mongo.db.post.delete_one({"_id": ObjectId(_id)})
         flash('Your post has been deleted!','success')
         return redirect(url_for('home'))
     else:
@@ -170,8 +170,8 @@ def account():
     if form.validate_on_submit():
         if form.picture.data:
             picture_file = save_picture(form.picture.data)
-            db.users.update_one({'_id': current_user._id}, {'$set': { "picture":picture_file}})
-        db.users.update_one({'_id': current_user._id}, {'$set': {"username":form.username.data, "email":form.email.data}})
+            mongo.db.users.update_one({'_id': current_user._id}, {'$set': { "picture":picture_file}})
+        mongo.db.users.update_one({'_id': current_user._id}, {'$set': {"username":form.username.data, "email":form.email.data}})
         flash('Your account has been updated!','success')
         return redirect(url_for('account'))
     elif request.method== 'GET':
@@ -182,20 +182,20 @@ def account():
 @app.route("/user/<username>")
 @login_required
 def user_posts(username):
-    fav=db.favriout
-    posts=  db.post.find({'author': username}).sort( [("_id", -1)]   )
+    fav=mongo.db.favriout
+    posts=  mongo.db.post.find({'author': username}).sort( [("_id", -1)]   )
     curr_user = records.find_one({'_id': current_user._id})
     postnumber=posts.count()
     return render_template('user_posts.html', posts=posts,username=username,postnumber=postnumber,curr_user=curr_user,fav=fav)
 
 @app.route("/is_favourite_post/<_id>/<path>",methods=['GET','POST'])
 def is_favourite_post(_id,path):
-    db.favourite.insert({ "user_id":current_user._id, "post_id":ObjectId(_id),"IsFavourite":True})
+    mongo.db.favourite.insert({ "user_id":current_user._id, "post_id":ObjectId(_id),"IsFavourite":True})
     return redirect(url_for(path))
 
 @app.route("/not_favourite_post/<_id>/<path>",methods=['GET','POST'])
 def not_favourite_post(_id,path):
-    db.favourite.delete_one({ "user_id":current_user._id,"post_id":ObjectId(_id)})
+    mongo.db.favourite.delete_one({ "user_id":current_user._id,"post_id":ObjectId(_id)})
     return redirect(url_for(path))   
 
 @app.route('/logout')
