@@ -10,9 +10,8 @@ import os
 app = Flask(__name__)
 bcrypt=Bcrypt(app)
 app.config['SECRET_KEY']='secret'
-app.config["MONGO_URI"] = "mongodb+srv://asha:password01@cluster0-llbmc.mongodb.net/test?retryWrites=true&w=majority"
-mongo = MongoClient('mongodb+srv://asha:password01@cluster0-llbmc.mongodb.net/admin', maxPoolSize=50, connect=False)
-db=mongo.get_database("CMSapp")
+app.config["MONGO_URI"] = "mongodb+srv://asha:password01@cluster0-llbmc.mongodb.net/CMSapp?retryWrites=true&w=majority"
+mongo = PyMongo(app)
 login_manager= LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'info'
