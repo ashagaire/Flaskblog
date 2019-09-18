@@ -8,7 +8,7 @@
     
     <article class="media content-section">
       
-        <img class="rounded-circle article-img" src="{{ url_for('static', filename='profilepics/' + post['author']['picture'] ) }}">
+        <img class="rounded-circle article-img" src="{{ url_for('file', filename= post['author']['picture'] ) }}">
             <div class="media-body">
               <div class="article-metadata row " style="padding-bottom:20px">
                 <div class="col-md-8">

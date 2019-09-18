@@ -9,17 +9,21 @@ import pymongo,os
 from bson import ObjectId
 records =mongo.db.users
 
-def save_picture(from_picture):
+def edit_filename(from_picture):
     random_hex=secrets.token_hex(8)
     _,f_ext = os.path.splitext(from_picture.filename)
     picture_fn = random_hex+f_ext
-    picture_path = os.path.join(app.root_path,'static\profilepics',picture_fn)
-    output_size = (125,125)
-    i = Image.open(from_picture)
-    i.thumbnail(output_size)
-    i.save(picture_path)
+    # picture_path = os.path.join(app.root_path,'static\profilepics',picture_fn)
+    # output_size = (125,125)
+    # i = Image.open(from_picture)
+    # i.thumbnail(output_size)
+    # i.save(picture_path)
 
     return picture_fn
+
+@app.route('/file/<filename>')
+def file(filename):
+    return mongo.send_file(filename)
 
 
 @app.route("/home")
@@ -81,8 +85,9 @@ def register():
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         if form.picture.data:
-            picture_file = save_picture(form.picture.data)
-        records.insert({ "username":form.username.data, "email":form.email.data, "password":hashed_password,"role":form.role.data,'picture':picture_file})
+            new_file_name = edit_filename(form.picture.data)
+            mongo.save_file(new_file_name,form.picture.data)
+        records.insert({ "username":form.username.data, "email":form.email.data, "password":hashed_password,"role":form.role.data,'picture':new_file_name})
         flash(f'Your account has been created.Now you can log in.','success')
         return redirect(url_for('login'))
     return render_template('register.html',title='Register',form=form)
@@ -134,7 +139,7 @@ def update_post(_id):
     form = PostForm()
     post=mongo.db.post.find_one({'_id':ObjectId(_id)})
     user = records.find_one({'_id': current_user._id})
-    if post['author'] != user['username']:
+    if post['author']['username'] != user['username']:
         abort(403)
     if form.validate_on_submit():
         mongo.db.post.update_one({'_id': ObjectId(_id)}, {'$set': {"title":form.title.data, "content":form.content.data}})
@@ -150,12 +155,8 @@ def update_post(_id):
 def delete_post(_id):
     post=mongo.db.post.find_one({"_id":ObjectId(_id)})
     user = records.find_one({"_id": current_user._id})
-    if (post['author'] == user['username']) or (user['role'] =='admin'):
-        # fav_listed= db.favourite.find({"post_id":ObjectId(_id)})
-        # if fav_listed:
-        #     for data in fav_listed:
-        #         db.favourite.delete_one({"_id": data['_id']})
-        mongo.db.favourite.delete_many({"post_id": ObjectId(_id)})      
+    if (post['author']['username'] == user['username']) or (user['role'] =='admin'):
+         mongo.db.favourite.delete_many({"post_id": ObjectId(_id)})      
         mongo.db.post.delete_one({"_id": ObjectId(_id)})
         flash('Your post has been deleted!','success')
         return redirect(url_for('home'))
@@ -169,9 +170,9 @@ def account():
     user = records.find_one({'_id': current_user._id})
     if form.validate_on_submit():
         if form.picture.data:
-            picture_file = save_picture(form.picture.data)
-            mongo.db.users.update_one({'_id': current_user._id}, {'$set': { "picture":picture_file}})
-        mongo.db.users.update_one({'_id': current_user._id}, {'$set': {"username":form.username.data, "email":form.email.data}})
+            new_file_name = edit_filename(form.picture.data)
+            mongo.save_file(new_file_name,form.picture.data)
+            mongo.db.users.update_one({'_id': current_user._id}, {'$set': {"username":form.username.data, "email":form.email.data}})
         flash('Your account has been updated!','success')
         return redirect(url_for('account'))
     elif request.method== 'GET':
@@ -183,7 +184,7 @@ def account():
 @login_required
 def user_posts(username):
     fav=mongo.db.favriout
-    posts=  mongo.db.post.find({'author': username}).sort( [("_id", -1)]   )
+    posts=  mongo.db.post.find({'author.username': username}).sort( [("_id", -1)]   )
     curr_user = records.find_one({'_id': current_user._id})
     postnumber=posts.count()
     return render_template('user_posts.html', posts=posts,username=username,postnumber=postnumber,curr_user=curr_user,fav=fav)

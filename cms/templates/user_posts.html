@@ -8,14 +8,14 @@
     {% for post in posts%}
     <article class="media content-section">
       
-        <img class="rounded-circle article-img" src="{{ url_for('static', filename='profilepics/' + post['userimage'] ) }}">
+        <img class="rounded-circle article-img" src="{{ url_for('file', filename= + post['author']['picture'] ) }}">
             <div class="media-body">
               <div class="article-metadata row " style="padding-bottom:20px">
                 <div class="col-md-8">
-                    <a class="mr-2" >{{ post['author'] }}</a>
+                    <a class="mr-2" >{{ post['author']['username'] }}</a>
                     <small class="text-muted">{{ post['date_posted'].strftime('%Y-%m-%d') }}</small>
                 </div>
-                {% if post['author'] == curr_user['username'] %}
+                {% if post['author']['username'] == curr_user['username'] %}
                 <div class="col-md-4" style="-moz-float-edge: ">
                     <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('update_post', _id=post['_id']) }}">Update</a>
                     <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
