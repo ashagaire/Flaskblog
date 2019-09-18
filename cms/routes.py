@@ -156,7 +156,7 @@ def delete_post(_id):
     post=mongo.db.post.find_one({"_id":ObjectId(_id)})
     user = records.find_one({"_id": current_user._id})
     if (post['author']['username'] == user['username']) or (user['role'] =='admin'):
-         mongo.db.favourite.delete_many({"post_id": ObjectId(_id)})      
+        mongo.db.favourite.delete_many({"post_id": ObjectId(_id)})      
         mongo.db.post.delete_one({"_id": ObjectId(_id)})
         flash('Your post has been deleted!','success')
         return redirect(url_for('home'))
