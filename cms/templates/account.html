@@ -9,7 +9,7 @@
         <img class="rounded-circle account-img" src="{{ url_for('file', filename=user['picture']) }}">
         
         <div class="media-body col-lg-8">
-            <a href="{{url_for('user_posts', username=user['username'])}}"><h2 class="account-heading">{{ user['username']}}</h2></a>
+            <h2 class="account-heading">{{ user['username']}}</h2>
             <p class="text-secondary">{{ user['email']}}</p>
         </div>
         <div class="col-lg-4">

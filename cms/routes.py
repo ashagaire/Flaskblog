@@ -39,8 +39,9 @@ def home():
 def myposts():
     fav=mongo.db.favourite
     curr_user = records.find_one({'_id': current_user._id})
-    posts=  mongo.db.post.find({'user_id': current_user._id}).sort([("_id", -1)])
-    return render_template('myposts.html', posts=posts,curr_user=curr_user,fav=fav)
+    posts=  mongo.db.post.find({'author.username': curr_user['username']}).sort([("_id", -1)])
+    postnumber = posts.count()
+    return render_template('myposts.html', posts=posts,curr_user=curr_user,fav=fav,postnumber=postnumber)
 
 @app.route("/fav_posts_list")
 @login_required

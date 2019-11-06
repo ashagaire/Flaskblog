@@ -1,6 +1,8 @@
 {% extends "layout.html"%}
 {%block content%}
-    {% for post in posts%}
+<h1 class="mb-3">My Posts                      ({{postnumber}})</h1>
+
+    {% for post in output%}
     
     <article class="media content-section">
       
@@ -24,8 +26,8 @@
                     <a href="{{ url_for('is_favourite_post', _id=post['_id'],path='home') }}" class="btn btn-info" role="button">Add to favourite</a>
                     {% endif %}
                 </div>
-                    {% endif %}
-                </div>
+                    
+                
                 {%elif curr_user['role'] == 'admin' %}
                 <div class="col-md-4 " >
                   <div class="float-right">
