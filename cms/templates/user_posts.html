@@ -27,8 +27,7 @@
                     {% else %}
                     <a href="{{ url_for('is_favourite_post', _id=post['_id'],path='home') }}" class="btn btn-info" role="button">Add to favourite</a>
                     {% endif %}
-                </div>
-                    {% endif %}
+                
                 </div>
                 {%elif curr_user[role] == 'admin' %}
                 <div class="col-md-4" >
